@@ -5,14 +5,23 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 import sys
-sys.path.append("/home/marikagr/.local/lib/python3.6/site-packages/")
 import seaborn as sns
+
+
+'''
+	:param 1: Path to placental DNAm data (pickled pandas df)
+	:param 2: Path to placental meta data (csv)
+	:param 3: Path to cord blood DNAm data (pickled pandas df)
+	:param 4: Path to cord blood meta data (csv)
+	:param 5: m for M-values and b for beta values
+	:param 6: Path where to save figures
+'''
 
 
 def bivariatedist(df1Means, df2Means):
 	jp = sns.jointplot(x=df1Means.values, y=df2Means.values)
 	jp.set_axis_labels("Placenta", "Cord blood")
-	plt.savefig("/home/marikagr/Gen3G/DistributionDonnees/distributionMoyennes_Mvals_filtered_18-04-13.svg", format="svg")
+	plt.savefig("%sdistributionMoyennes_%s.svg"%(savePath,valueType), format="svg")
 	plt.close()
 
 
@@ -23,7 +32,7 @@ def boxplotOfMeans(df1Means, df2Means):
 	ax = sns.boxplot(data=toPlot)
 	ax.set(title='DNA methylation levels are lower placenta than in cord blood', xlabel='Tissue',
 		   ylabel='Per individual DNAm mean (M-values)')
-	plt.savefig("/home/marikagr/Gen3G/DistributionDonnees/boxplotMoyennes_Mvals_filtered_18-04-13.svg", format="svg")
+	plt.savefig("%sboxplotMoyennes_%s.svg"%(savePath,valueType), format="svg")
 	plt.close()
 
 
@@ -63,16 +72,11 @@ def plotMeansDistribution(df1, df2):
 def main():
 	## Data loading
 	print("Importing data...\t" + str(datetime.now()))
-	pMeta = pd.read_csv(
-		"/mnt/parallel_scratch_mp2_wipe_on_december_2018/jacques/marikagr/Gen3G/Filtered_18-04-13/placenta_meta.csv",
-		header=0, index_col=0, float_precision='high')
-	pMeth = pd.read_pickle(
-		"/mnt/parallel_scratch_mp2_wipe_on_december_2018/jacques/marikagr/Gen3G/Filtered_18-04-13/ComBat_Mvals_placenta_filtered_18-04-13")
-	cbMeta = pd.read_csv(
-		"/mnt/parallel_scratch_mp2_wipe_on_december_2018/jacques/marikagr/Gen3G/Filtered_18-04-13/cordblood_meta.csv",
-		header=0, index_col=0, float_precision='high')
-	cbMeth = pd.read_pickle(
-		"/mnt/parallel_scratch_mp2_wipe_on_december_2018/jacques/marikagr/Gen3G/Filtered_18-04-13/ComBat_Mvals_cordblood_filtered_18-04-13")
+	pMeth = pd.read_pickle(pMethPath)
+	pMeta = pd.read_csv(pMetaPath,header=0, index_col=0, float_precision='high')
+
+	cbMeth = pd.read_pickle(cbMethPath)
+	cbMeta = pd.read_csv(cbMetaPath,header=0, index_col=0, float_precision='high')
 
 	## Keep only participants and CpG sites present in both tissues
 	print("Creating intersection of data...\t" + str(datetime.now()))
@@ -88,6 +92,12 @@ def main():
 
 
 if __name__ == '__main__':
+	pMethPath = sys.argv[1]
+	pMetaPath = sys.argv[2]
+	cbMethPath = sys.argv[3]
+	cbMetaPath = sys.argv[4]
+	valueType = "Mvals" if sys.argv[5] in ["M", "m"] else "Bvals" if sys.argv[5] in ["B", "b"] else sys.argv[5]
+	savePath = sys.argv[6]
 
 	main()
 
