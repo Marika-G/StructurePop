@@ -30,7 +30,8 @@ def PCA():
 	pca = decomp.PCA(n_components=2)  ##NOTE: the randomized svd_solver will be used because nb components << dimensions
 	transformed = pca.fit_transform(np.transpose(normalizedSharedMatrix)) #PCA takes arrays shape(n_samples, n_components)
 
-	print("Explained variance ratio:\n" + str(pca.explained_variance_ratio_))
+	with open("%sexplained_variance_%s.txt"%(savePath, methPath.split('/')[-1].split('.')[0])) as file:
+		file.write("Explained variance ratio:\n" + str(pca.explained_variance_ratio_))
 
 	return pd.DataFrame(transformed, index=mat.columns, columns=[1,2])
 
@@ -61,9 +62,6 @@ def main():
 	transformed = PCA()
 	print(transformed.head())
 	transformed.to_pickle("%sPCA_%s"%(savePath, methPath.split('/')[-1].split('.')[0]))
-
-
-
 
 
 if __name__ == '__main__':
