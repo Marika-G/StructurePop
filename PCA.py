@@ -30,6 +30,8 @@ def PCA():
 	pca = decomp.PCA(n_components=2)  ##NOTE: the randomized svd_solver will be used because nb components << dimensions
 	transformed = pca.fit_transform(np.transpose(normalizedSharedMatrix)) #PCA takes arrays shape(n_samples, n_components)
 
+	print("Explained variance ratio:\n" + str(pca.explained_variance_ratio_))
+
 	return pd.DataFrame(transformed, index=mat.columns, columns=[1,2])
 
 
@@ -58,6 +60,7 @@ def main():
 	print("Performing PCA...\t" + str(datetime.now()))
 	transformed = PCA()
 	print(transformed.head())
+	transformed.to_pickle("%sPCA_%s"%(savePath, methPath.split('/')[-1].split('.')[0]))
 
 
 
@@ -66,6 +69,7 @@ def main():
 if __name__ == '__main__':
 	methPath = sys.argv[1]
 	toNormalize = sys.argv[2].split('=')[1] == 'True'
+	savePath= sys.argv[3]
 
 	#### Importing data to be read by child processes and
 	# creating global shared array to be writen into by child processes ####
