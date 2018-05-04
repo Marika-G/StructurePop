@@ -41,7 +41,7 @@ def normalize(index):
 	normalizedSharedMatrix[:, index] = sciStt.zscore(mat.iloc[:, index].values, ddof=1)
 
 
-def normalizeByCol():
+def normalizeByParticipant():
 	with mp.Pool(23) as P:
 		P.map(normalize, range(mat.shape[1]))
 
@@ -73,7 +73,7 @@ def main():
 		#### Normalize ####
 		print("Normalizing data... " + str(datetime.now()))
 		# Acts on global variable
-		normalizeByCol()
+		normalizeByParticipant()
 	else:
 		#### Transfer data to shared object ####
 		print("Preparing data... " + str(datetime.now()))
@@ -96,6 +96,7 @@ def main():
 	print(euclDist.head())
 	normalizationFlag = '' if toNormalize else 'notNormed_'
 	euclDist.to_pickle("%s%seuclideanDist_%s"%(savePath, normalizationFlag, dataPath.split('/')[-1].split('.')[0]))
+
 
 if __name__ == '__main__':
 
