@@ -1,5 +1,6 @@
 from datetime import datetime
 import pandas as pd
+import math as m
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -47,16 +48,38 @@ def makeDendro(flatDist, labels, meta):
 	print("Linkage:")
 	print(clusters)
 
-	plt.subplot(211)
+	plt.subplot(11,1,(1,8))
 	dendro = sciHi.dendrogram(clusters, labels=labels)
 	for i in dendro:
 		print(i, dendro[i])
+	ax = plt.gca()
+	plt.setp(ax.get_xticklabels(), visible=False)
 
-	plt.subplot(212)
+	plt.subplot(11,1,9)
 	genders = [genderToNum(meta.loc[meta['Sample_Name'] == ind, 'Delivery_Sex'].values[0]) for ind in dendro['ivl']]
-	#plt.imshow([genders, genders])
+	plt.imshow([genders, genders])
+	plt.yticks([])
+	plt.xticks([])
+	plt.axis('off')
 
-	#plt.savefig('%sdendro_test_%s.svg' % (savePath, distDataPath.split('/')[-1]), format='svg')
+	plt.subplot(11, 1, 10)
+	smoking = [smokingToNum(meta.loc[meta['Sample_Name'] == ind, 'Patient_tobacco_now'].values[0]) for ind in dendro['ivl']]
+	plt.imshow([smoking, smoking])
+	plt.yticks([])
+	plt.xticks([])
+	plt.axis('off')
+
+	plt.subplot(11, 1, 11)
+	ga = [m.trunc(meta.loc[meta['Sample_Name'] == ind, 'Delivery_week_at_delivery'].values[0]) for ind in dendro['ivl']]
+	plt.imshow([ga, ga])
+	plt.yticks([])
+	plt.xticks([])
+	plt.rcParams['lines.linewidth'] = 0
+	plt.axis('off')
+
+
+
+	plt.savefig('%sdendro_test_%s.svg' % (savePath, distDataPath.split('/')[-1]), format='svg')
 	# dendro = sciHi.dendrogram(clusters, truncate_mode='level', p=20)
 	# plt.savefig('%sdendro_p20_%s.svg' % (savePath, distDataPath.split('/')[-1]), format='svg')
 	plt.close()
@@ -108,6 +131,10 @@ def scatter3D(coordList, groupDict):
 		ax.scatter(x,y,z,color=color)
 	fig.savefig("%sscatter3D_colored_%s.svg" % (savePath, distDataPath.split('/')[-1]), format='svg')
 	plt.close()
+
+
+def smokingToNum(value):
+	return 1 if value == 'Yes' else 0
 
 
 def toFlatDistance(distMat):
