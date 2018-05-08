@@ -19,6 +19,10 @@ import sys
 	:param 4 : Path where output fig should be saved
 '''
 
+def dgToNum(dg):
+	return 0 if dg == '0' else 1
+
+
 def genderToNum(gender):
 	return 1 if gender == 'Male' else 0
 
@@ -48,35 +52,48 @@ def makeDendro(flatDist, labels, meta):
 	print("Linkage:")
 	print(clusters)
 
-	plt.subplot(11,1,(1,8))
+	plt.subplot(20,1,(1,15))
+	plt.rcParams['lines.linewidth'] = 0.6
 	dendro = sciHi.dendrogram(clusters, labels=labels)
 	for i in dendro:
 		print(i, dendro[i])
 	ax = plt.gca()
 	plt.setp(ax.get_xticklabels(), visible=False)
 
-	plt.subplot(11,1,9)
+	plt.subplot(20,1,16)
 	genders = [genderToNum(meta.loc[meta['Sample_Name'] == ind, 'Delivery_Sex'].values[0]) for ind in dendro['ivl']]
-	plt.imshow([genders, genders])
+	plt.imshow([genders]*4)
 	plt.yticks([])
 	plt.xticks([])
 	plt.axis('off')
 
-	plt.subplot(11, 1, 10)
+	plt.subplot(20, 1, 17)
 	smoking = [smokingToNum(meta.loc[meta['Sample_Name'] == ind, 'Patient_tobacco_now'].values[0]) for ind in dendro['ivl']]
-	plt.imshow([smoking, smoking])
+	plt.imshow([smoking]*4)
 	plt.yticks([])
 	plt.xticks([])
 	plt.axis('off')
 
-	plt.subplot(11, 1, 11)
+	plt.subplot(20, 1, 18)
 	ga = [m.trunc(meta.loc[meta['Sample_Name'] == ind, 'Delivery_week_at_delivery'].values[0]) for ind in dendro['ivl']]
-	plt.imshow([ga, ga])
+	plt.imshow([ga]*4)
 	plt.yticks([])
 	plt.xticks([])
-	plt.rcParams['lines.linewidth'] = 0
 	plt.axis('off')
 
+	plt.subplot(20, 1, 19)
+	gd = [dgToNum(meta.loc[meta['Sample_Name'] == ind, 'DG'].values[0]) for ind in dendro['ivl']]
+	plt.imshow([gd]*4)
+	plt.yticks([])
+	plt.xticks([])
+	plt.axis('off')
+
+	plt.subplot(20, 1, 20)
+	baby_weight = [weightToNum(meta.loc[meta['Sample_Name'] == ind, 'SGA, AGA ou LGA (par rapport au poids)'].values[0]) for ind in dendro['ivl']]
+	plt.imshow([baby_weight]*4)
+	plt.yticks([])
+	plt.xticks([])
+	plt.axis('off')
 
 
 	plt.savefig('%sdendro_test_%s.svg' % (savePath, distDataPath.split('/')[-1]), format='svg')
@@ -141,6 +158,10 @@ def toFlatDistance(distMat):
 	return sciDist.squareform(distMat, force='tovector', checks=False)
 
 
+def weightToNum(weightCat):
+	return 0 if weightCat == 'AGA' else -1 if weightCat == 'SGA' else 1 #if weightCat == 'LGA'
+
+
 def main():
 	#### Import data ####
 	print("\nLoading distance matrix...\t%s"%(str(datetime.now())))
@@ -154,8 +175,8 @@ def main():
 	print(meta.head())
 
 	#### Reindex dist matrix to patient id ####
-	print("\nReindexing distance matrix...\t%s" % (str(datetime.now())))
-	reindex(dist, meta)
+	#print("\nReindexing distance matrix...\t%s" % (str(datetime.now())))
+	#reindex(dist, meta)
 
 	#### From square dist matrix to condensed ####
 	print("\nGenerating condensed distance matrix...\t%s"%(str(datetime.now())))
