@@ -15,7 +15,7 @@ import sys
 '''
 	:param 1 : Path to pickled pandas data frame, a N x N distance matrix
 	:param 2 : Type of distance used to generate initial data ('pearson' ot 'euclidean')
-	:param 3 : Path to meta data
+	:param 3 : Path to pickled meta data
 	:param 4 : Path where output fig should be saved
 '''
 
@@ -149,7 +149,7 @@ def main():
 	print(dist.head())
 
 	print("\nLoading meta data...\t%s" % (str(datetime.now())))
-	meta = pd.read_csv(metaPath, header=0, index_col=0)
+	meta = pd.read_pickle(metaPath)
 	print(meta.shape)
 	print(meta.head())
 
