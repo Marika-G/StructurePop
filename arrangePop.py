@@ -18,6 +18,10 @@ import sys
 	:param 4 : Path where output fig should be saved
 '''
 
+def genderToNum(gender):
+	return 1 if gender == 'Male' else 0
+
+
 #Adapted from http://www.nxn.se/valent/extract-cluster-elements-by-color-in-python
 def get_cluster_classes(den, label='ivl'):
 	cluster_idxs = dict()
@@ -38,21 +42,21 @@ def get_cluster_classes(den, label='ivl'):
 	return colorGroup
 
 
-def makeDendro(flatDist, meta):
+def makeDendro(flatDist, labels, meta):
 	clusters = sciHi.linkage(flatDist, metric=distMetric, method='average')
 	print("Linkage:")
 	print(clusters)
 
 	plt.subplot(211)
-	dendro = sciHi.dendrogram(clusters)
+	dendro = sciHi.dendrogram(clusters, labels=labels)
 	for i in dendro:
 		print(i, dendro[i])
 
 	plt.subplot(212)
-	sexArray = np.array([1 if sex == 'Male' else 0 for sex in meta['Delivery_Sex']])
-	plt.imshow([sexArray, sexArray])
+	genders = [genderToNum(meta.loc[meta['Sample_Name'] == ind, 'Delivery_Sex'].values[0]) for ind in dendro['ivl']]
+	#plt.imshow([genders, genders])
 
-	plt.savefig('%sdendro_test_%s.svg' % (savePath, distDataPath.split('/')[-1]), format='svg')
+	#plt.savefig('%sdendro_test_%s.svg' % (savePath, distDataPath.split('/')[-1]), format='svg')
 	# dendro = sciHi.dendrogram(clusters, truncate_mode='level', p=20)
 	# plt.savefig('%sdendro_p20_%s.svg' % (savePath, distDataPath.split('/')[-1]), format='svg')
 	plt.close()
@@ -123,21 +127,22 @@ def main():
 	print(meta.head())
 
 	#### Reindex dist matrix to patient id ####
+	print("\nReindexing distance matrix...\t%s" % (str(datetime.now())))
 	reindex(dist, meta)
 
-	# #### From square dist matrix to condensed ####
-	# print("\nGenerating condensed distance matrix...\t%s"%(str(datetime.now())))
-	# flatDist = toFlatDistance(dist)
-	# print(flatDist)
-	#
-	# #### Make dendrogram ####
-	# print("\nGenerating dendrogram...\t%s"%(str(datetime.now())))
-	# dendro = makeDendro(flatDist, meta)
-	# #print("Leaves:")
-	# #print(dendro['leaves'])
-	# clust = get_cluster_classes(dendro)
-	#
-	#
+	#### From square dist matrix to condensed ####
+	print("\nGenerating condensed distance matrix...\t%s"%(str(datetime.now())))
+	flatDist = toFlatDistance(dist)
+	print(flatDist)
+
+	#### Make dendrogram ####
+	print("\nGenerating dendrogram...\t%s"%(str(datetime.now())))
+	dendro = makeDendro(flatDist, dist.columns, meta)
+	#print("Leaves:")
+	#print(dendro['leaves'])
+	clust = get_cluster_classes(dendro)
+
+
 	# for color in clust.keys():
 	# 	print("%s : %s\t"%(color, [dist.columns[int(leave)] for leave in clust[color]]))
 	# 	#print("%s : %s\t" % (color, [leave for leave in clust[color]]))
