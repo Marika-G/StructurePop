@@ -4,6 +4,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
 import scipy.cluster.hierarchy as sciHi
 import scipy.spatial.distance as sciDist
 import sklearn.manifold as skman
@@ -13,7 +14,8 @@ import sys
 '''
 	:param 1 : Path to pickled pandas data frame, a N x N distance matrix
 	:param 2 : Type of distance used to generate initial data ('pearson' ot 'euclidean')
-	:param 3 : Path where output fig should be saved
+	:param 3 : Path to meta data
+	:param 4 : Path where output fig should be saved
 '''
 
 #Adapted from http://www.nxn.se/valent/extract-cluster-elements-by-color-in-python
@@ -36,15 +38,21 @@ def get_cluster_classes(den, label='ivl'):
 	return colorGroup
 
 
-def makeDendro(flatDist):
+def makeDendro(flatDist, meta):
 	clusters = sciHi.linkage(flatDist, metric=distMetric, method='average')
 	print("Linkage:")
 	print(clusters)
 
+	plt.subplot(211)
 	dendro = sciHi.dendrogram(clusters)
 	for i in dendro:
 		print(i, dendro[i])
-	plt.savefig('%sdendro_%s.svg' % (savePath, distDataPath.split('/')[-1]), format='svg')
+
+	plt.subplot(212)
+	sexArray = np.array([1 if sex == 'Male' else 0 for sex in meta['Delivery_Sex']])
+	plt.imshow([sexArray, sexArray])
+
+	plt.savefig('%sdendro_test_%s.svg' % (savePath, distDataPath.split('/')[-1]), format='svg')
 	# dendro = sciHi.dendrogram(clusters, truncate_mode='level', p=20)
 	# plt.savefig('%sdendro_p20_%s.svg' % (savePath, distDataPath.split('/')[-1]), format='svg')
 	plt.close()
@@ -70,6 +78,11 @@ def reorderData(dendroLeaves, matrix):
 	matrix.index = pd.MultiIndex.from_arrays([range(len(indNames)), indNames], names=['Num', 'Id'])
 	# Sort columns by the numerical level, based on dendrogram order
 	return matrix.reindex(labels=dendroLeaves, axis='columns', level='Num').reindex(labels=dendroLeaves, axis='index', level='Num')
+
+
+def reindex(distMat, metaData):
+	distMat.columns = [metaData.loc[index, 'Sample_Name'] for index in distMat.columns]
+	distMat.index = [metaData.loc[index, 'Sample_Name'] for index in distMat.index]
 
 
 def scatter2D(coordList, groupDict):
@@ -104,22 +117,30 @@ def main():
 	print(dist.shape)
 	print(dist.head())
 
-	#### From square dist matrix to condensed ####
-	print("\nGenerating condensed distance matrix...\t%s"%(str(datetime.now())))
-	flatDist = toFlatDistance(dist)
-	print(flatDist)
+	print("\nLoading meta data...\t%s" % (str(datetime.now())))
+	meta = pd.read_csv(metaPath, header=0, index_col=0)
+	print(meta.shape)
+	print(meta.head())
 
-	#### Make dendrogram ####
-	print("\nGenerating dendrogram...\t%s"%(str(datetime.now())))
-	dendro = makeDendro(flatDist)
-	#print("Leaves:")
-	#print(dendro['leaves'])
-	clust = get_cluster_classes(dendro)
+	#### Reindex dist matrix to patient id ####
+	reindex(dist, meta)
 
-
-	for color in clust.keys():
-		print("%s : %s\t"%(color, [dist.columns[int(leave)] for leave in clust[color]]))
-		#print("%s : %s\t" % (color, [leave for leave in clust[color]]))
+	# #### From square dist matrix to condensed ####
+	# print("\nGenerating condensed distance matrix...\t%s"%(str(datetime.now())))
+	# flatDist = toFlatDistance(dist)
+	# print(flatDist)
+	#
+	# #### Make dendrogram ####
+	# print("\nGenerating dendrogram...\t%s"%(str(datetime.now())))
+	# dendro = makeDendro(flatDist, meta)
+	# #print("Leaves:")
+	# #print(dendro['leaves'])
+	# clust = get_cluster_classes(dendro)
+	#
+	#
+	# for color in clust.keys():
+	# 	print("%s : %s\t"%(color, [dist.columns[int(leave)] for leave in clust[color]]))
+	# 	#print("%s : %s\t" % (color, [leave for leave in clust[color]]))
 
 	#### Reorder methylation matrix based on the resulting clustering and generate heatmap ####
 	# print("\nReordering distance matrix...\t%s" % (str(datetime.now())))
@@ -130,23 +151,24 @@ def main():
 	# print("\nGenerating heatmap...\t%s"%(str(datetime.now())))
 	# makeHeatMap(reorderedDist)
 
-	print("\nComputing points position in new space...\t%s" % (str(datetime.now())))
-	MDS3D = skman.MDS(n_components=3, n_jobs=4, dissimilarity='precomputed')
-	fit3D = MDS3D.fit_transform(dist.values)
-
-	MDS2D = skman.MDS(n_components=2, n_jobs=4, dissimilarity='precomputed')
-	fit2D = MDS2D.fit_transform(dist.values)
-
-	print("\nGenerating scatter plots...\t%s" % (str(datetime.now())))
-	scatter3D(fit3D, clust)
-	scatter2D(fit2D, clust)
-
-	print("End\t%s"%(str(datetime.now())))
+	# print("\nComputing points position in new space...\t%s" % (str(datetime.now())))
+	# MDS3D = skman.MDS(n_components=3, n_jobs=4, dissimilarity='precomputed')
+	# fit3D = MDS3D.fit_transform(dist.values)
+	#
+	# MDS2D = skman.MDS(n_components=2, n_jobs=4, dissimilarity='precomputed')
+	# fit2D = MDS2D.fit_transform(dist.values)
+	#
+	# print("\nGenerating scatter plots...\t%s" % (str(datetime.now())))
+	# scatter3D(fit3D, clust)
+	# scatter2D(fit2D, clust)
+	#
+	# print("End\t%s"%(str(datetime.now())))
 
 
 if __name__ == '__main__':
 	distDataPath = sys.argv[1]
 	distMetric = 'correlation' if sys.argv[2] != 'euclidean' else sys.argv[2]
-	savePath = sys.argv[3]
+	metaPath = sys.argv[3]
+	savePath = sys.argv[4]
 
 	main()
