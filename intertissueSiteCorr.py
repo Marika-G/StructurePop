@@ -9,6 +9,7 @@ import sys
 
 '''
     :Path to combined tissues
+    :Correlation type [Pearson/Spearman]
     :Save path
 '''
 
@@ -21,10 +22,22 @@ def pearson(matName, correlationsName, index):
     correlations[index] = sciStt.pearsonr(site.iloc[:, 0].values, site.iloc[:, 1].values)[0]
 
 
+def spearman(matName, correlationsName, index):
+    data = globals()[matName]
+    correlations = globals()[correlationsName]
+
+    site = data.iloc[index].unstack()
+    correlations[index] = sciStt.spearmanr(site.iloc[:, 0].values, site.iloc[:, 1].values)[0]
+
+
 def main():
-    print("Computing inter-tissue Pearson correlation for each CpG... " + str(datetime.now()))
-    with mp.Pool(processes=2) as p:
-        p.map(fct.partial(pearson, 'methData', 'correlations'), range(methData.shape[0]))
+    print("Computing inter-tissue %s correlation for each CpG... "%(corrType) + str(datetime.now()))
+    if corrType == 'Pearson':
+        with mp.Pool(processes=47) as p:
+            p.map(fct.partial(pearson, 'methData', 'correlations'), range(methData.shape[0]))
+    elif corrType == 'Spearman':
+        with mp.Pool(processes=47) as p:
+            p.map(fct.partial(spearman, 'methData', 'correlations'), range(methData.shape[0]))
     global correlations
     correlations = pd.DataFrame(data=correlations, index=methData.index, columns=['Correlation'])
 
@@ -35,7 +48,8 @@ def main():
 
 if __name__ == '__main__':
     dataPath = sys.argv[1]
-    savePath = sys.argv[2]
+    corrType = sys.argv[2]
+    savePath = sys.argv[3]
 
     print("Importing data... " + str(datetime.now()))
     methData = pd.read_pickle(dataPath)
