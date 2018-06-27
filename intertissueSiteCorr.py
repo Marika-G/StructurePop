@@ -33,17 +33,19 @@ def spearman(matName, correlationsName, index):
 def main():
     print("Computing inter-tissue %s correlation for each CpG... "%(corrType) + str(datetime.now()))
     if corrType == 'Pearson':
-        with mp.Pool(processes=47) as p:
+        with mp.Pool(processes=23) as p:
             p.map(fct.partial(pearson, 'methData', 'correlations'), range(methData.shape[0]))
     elif corrType == 'Spearman':
-        with mp.Pool(processes=47) as p:
+        with mp.Pool(processes=23) as p:
             p.map(fct.partial(spearman, 'methData', 'correlations'), range(methData.shape[0]))
+    else:
+        raise ValueError("Correlation type must be 'Spearman' or 'Pearson'")
     global correlations
     correlations = pd.DataFrame(data=correlations, index=methData.index, columns=['Correlation'])
 
     print("Saving results... " + str(datetime.now()))
     print(correlations.head())
-    correlations.to_pickle("%sinter-tissue_site_correlation_%s"%(savePath,dataPath.split('/')[-1].split('.')[0]))
+    correlations.to_pickle("%sinter-tissue_site_%s_%s"%(savePath,corrType,dataPath.split('/')[-1].split('.')[0]))
 
 
 if __name__ == '__main__':
