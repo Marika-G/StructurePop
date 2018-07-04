@@ -54,7 +54,7 @@ def main():
 if __name__ == '__main__':
     coordPath = sys.argv[1]
     dataPath = sys.argv[2]
-    sample = sys.argv[3]
+    sample = int(sys.argv[3])
     withHeader = sys.argv[4]
     savePath = sys.argv[5]
 
